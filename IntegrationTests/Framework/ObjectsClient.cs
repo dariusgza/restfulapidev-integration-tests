@@ -26,18 +26,30 @@ namespace IntegrationTests.Framework
             return JsonSerializer.Deserialize<T>(json, JsonOptions);
         }
 
-        internal async Task<T?> PostObjectAsync<T>(Uri endpoint, T requestBody)
+        internal async Task<T?> GetObjectByIdAsync<T>(Uri endpoint, string id)
+        {
+            ArgumentNullException.ThrowIfNull(endpoint);
+            ArgumentException.ThrowIfNullOrEmpty(id);
+            
+            var requestUri = new Uri(endpoint, Uri.EscapeDataString(id));
+            var response = await _client.GetAsync(requestUri).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return JsonSerializer.Deserialize<T>(json, JsonOptions);
+        }
+        internal async Task<TResponse?> PostObjectAsync<TRequest, TResponse>(Uri endpoint, TRequest requestBody)
         {
             using var jsonContent = new StringContent(
-              JsonSerializer.Serialize(requestBody, JsonOptions),
-              Encoding.UTF8,
-              "application/json");
+                JsonSerializer.Serialize(requestBody, JsonOptions),
+                Encoding.UTF8,
+                "application/json");
 
             var response = await _client.PostAsync(endpoint, jsonContent).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<T>(responseJson, JsonOptions);
+            return JsonSerializer.Deserialize<TResponse>(responseJson, JsonOptions);
         }
 
         internal async Task<T?> PutObjectAsync<T>(Uri endpoint, T requestBody)
