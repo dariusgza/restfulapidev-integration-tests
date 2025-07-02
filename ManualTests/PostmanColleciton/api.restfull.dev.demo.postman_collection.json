@@ -1,0 +1,241 @@
+{
+	"info": {
+		"_postman_id": "ac8994b1-a2f2-4484-a75d-93e2b65ec120",
+		"name": "api.restfull.dev.demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "10606446"
+	},
+	"item": [
+		{
+			"name": "List of all objects",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// check the performance of the response\r",
+							"pm.test(\"Response time is less than 500ms\", function () {\r",
+							"    pm.expect(pm.response.responseTime).to.be.below(500);\r",
+							"});\r",
+							"\r",
+							"// check the authentication of the request\r",
+							"pm.test(\"Authorization header is present\", function () {\r",
+							"    pm.expect(pm.request.headers.get(\"Authorization\")).to.not.be.null;\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Number of objects in response is correct\", function () {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response).to.be.an('array').that.has.lengthOf(13); \r",
+							"});\r",
+							"\r",
+							"const response = pm.response.json();\r",
+							"// Define the expected schema\r",
+							"const expectedSchema = {\r",
+							"    type: 'object',\r",
+							"    properties: {\r",
+							"        id: { type: 'string' },\r",
+							"        name: { type: 'string' },\r",
+							"        data: {\r",
+							"            type: ['object', 'null'], // data can be an object or null\r",
+							"            properties: {\r",
+							"                color: { type: 'string' },\r",
+							"                capacity: { type: 'string' },\r",
+							"                price: { type: 'number' } // Assuming price is a number\r",
+							"            }\r",
+							"        }\r",
+							"    },\r",
+							"    required: ['id', 'name', 'data']\r",
+							"};\r",
+							"\r",
+							"// Validate the required schema for each object in the response\r",
+							"pm.test(\"Validate the required schema for each object in the response\", function () {\r",
+							"    response.forEach(item => {\r",
+							"        pm.expect(item).to.be.jsonSchema(expectedSchema);\r",
+							"    });\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/objects",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"objects"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "List of objects by ids",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/objects?id=3&id=5",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"objects"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "3"
+						},
+						{
+							"key": "id",
+							"value": "5"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Single object",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/objects?id=7",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"objects"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "7"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add object",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"name\": \"Apple MacBook M4 Pro\",\r\n   \"data\": {\r\n      \"year\": 2025,\r\n      \"price\": 2349.99,\r\n      \"CPU model\": \"M4 Max\",\r\n      \"Hard disk size\": \"1 TB\"\r\n   }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/objects",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"objects"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update object",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"name\": \"Apple MacBook Pro 16\",\r\n   \"data\": {\r\n      \"year\": 2019,\r\n      \"price\": 2049.99,\r\n      \"CPU model\": \"Intel Core i9\",\r\n      \"Hard disk size\": \"1 TB\",\r\n      \"color\": \"silver\"\r\n   }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/objects/ff8081819782e69e0197ae6f9d1e7d06",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"objects",
+						"ff8081819782e69e0197ae6f9d1e7d06"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Partially update object",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"name\": \"Apple MacBook Pro M4 (Updated Name)\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/objects/ff8081819782e69e0197ae6f9d1e7d06",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"objects",
+						"ff8081819782e69e0197ae6f9d1e7d06"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete object",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/objects/6",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"objects",
+						"6"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "https://api.restful-api.dev",
+			"type": "default"
+		}
+	]
+}
