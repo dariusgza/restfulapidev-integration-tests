@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace IntegrationTests.Models
 {
-    internal class Objects
+    public class Objects
     {
         [JsonPropertyName("id")]
         public required string Id { get; set; }

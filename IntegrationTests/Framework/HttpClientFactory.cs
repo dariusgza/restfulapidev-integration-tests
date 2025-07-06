@@ -6,7 +6,7 @@ namespace IntegrationTests.Framework
         {
             var client = new HttpClient
             {
-                BaseAddress = new Uri("https://api.restful-api.dev/objects/")
+                BaseAddress = new Uri("https://api.restful-api.dev/")
             };
 
             return client;

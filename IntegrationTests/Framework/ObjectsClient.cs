@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace IntegrationTests.Framework
 {
@@ -9,84 +10,78 @@ namespace IntegrationTests.Framework
 
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString
         };
 
         internal ObjectsClient(HttpClient client)
         {
+            ArgumentNullException.ThrowIfNull(client);
             _client = client;
         }
-
-        internal async Task<T?> GetObjectsAsync<T>(Uri endpoint)
+        internal Task<T?> GetAsync<T>(Uri endpoint)
         {
-            var response = await _client.GetAsync(endpoint).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<T>(json, JsonOptions);
+            ArgumentNullException.ThrowIfNull(endpoint);
+            return SendRequestAsync<T>(() => _client.GetAsync(endpoint));
         }
 
-        internal async Task<T?> GetObjectByIdAsync<T>(Uri endpoint, string id)
+        internal Task<T?> GetObjectByIdAsync<T>(Uri endpoint, string id)
         {
             ArgumentNullException.ThrowIfNull(endpoint);
             ArgumentException.ThrowIfNullOrEmpty(id);
             
             var requestUri = new Uri(endpoint, Uri.EscapeDataString(id));
-            var response = await _client.GetAsync(requestUri).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<T>(json, JsonOptions);
+            return SendRequestAsync<T>(() => _client.GetAsync(requestUri));
         }
-        internal async Task<TResponse?> PostObjectAsync<TRequest, TResponse>(Uri endpoint, TRequest requestBody)
+        
+        internal Task<TResponse?> PostAsync<TRequest, TResponse>(Uri endpoint, TRequest requestBody)
         {
-            using var jsonContent = new StringContent(
-                JsonSerializer.Serialize(requestBody, JsonOptions),
+            ArgumentNullException.ThrowIfNull(endpoint);
+            ArgumentNullException.ThrowIfNull(requestBody);
+
+            var content = CreateJsonContent(requestBody);
+            return SendRequestAsync<TResponse>(() => _client.PostAsync(endpoint, content));
+        }
+
+        internal Task<T?> PutAsync<T>(Uri endpoint, T requestBody)
+        {
+            ArgumentNullException.ThrowIfNull(endpoint);
+            ArgumentNullException.ThrowIfNull(requestBody);
+
+            var content = CreateJsonContent(requestBody);
+            return SendRequestAsync<T>(() => _client.PutAsync(endpoint, content));
+        }
+
+        internal Task<T?> PatchAsync<T>(Uri endpoint, T requestBody)
+        {
+            ArgumentNullException.ThrowIfNull(endpoint);
+            ArgumentNullException.ThrowIfNull(requestBody);
+
+            using var content = CreateJsonContent(requestBody);
+            return SendRequestAsync<T>(() => _client.PatchAsync(endpoint, content));
+        }
+
+        internal Task<T?> DeleteAsync<T>(Uri endpoint)
+        {
+            ArgumentNullException.ThrowIfNull(endpoint);
+            return SendRequestAsync<T>(() => _client.DeleteAsync(endpoint));
+        }
+
+        private static StringContent CreateJsonContent<T>(T data)
+        {
+            return new StringContent(
+                JsonSerializer.Serialize(data, JsonOptions),
                 Encoding.UTF8,
                 "application/json");
-
-            var response = await _client.PostAsync(endpoint, jsonContent).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-
-            var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<TResponse>(responseJson, JsonOptions);
         }
 
-        internal async Task<T?> PutObjectAsync<T>(Uri endpoint, T requestBody)
+        private static async Task<T?> SendRequestAsync<T>(Func<Task<HttpResponseMessage>> requestFunc)
         {
-            using var jsonContent = new StringContent(
-              JsonSerializer.Serialize(requestBody, JsonOptions),
-              Encoding.UTF8,
-              "application/json");
-
-            var response = await _client.PutAsync(endpoint, jsonContent).ConfigureAwait(false);
+            using var response = await requestFunc().ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<T>(responseJson, JsonOptions);
-        }
-
-        internal async Task<T?> PatchObjectAsync<T>(Uri endpoint, T requestBody)
-        {
-            using var jsonContent = new StringContent(
-              JsonSerializer.Serialize(requestBody, JsonOptions),
-              Encoding.UTF8,
-              "application/json");
-
-            var response = await _client.PatchAsync(endpoint, jsonContent).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-
-            var responseJson = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<T>(responseJson, JsonOptions);
-        }
-
-        internal async Task<T?> DeleteObjectAsync<T>(Uri endpoint)
-        {
-            var response = await _client.DeleteAsync(endpoint).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<T>(json, JsonOptions);
+            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            return JsonSerializer.Deserialize<T>(content, JsonOptions);
         }
     }
 }

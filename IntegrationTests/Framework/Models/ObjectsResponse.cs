@@ -1,12 +1,15 @@
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
 namespace IntegrationTests.Models
 {
-    internal class ObjectsResponse
+    public class ObjectsResponse
     {
-    public required List<Objects> Response { get; set; }
-    public required string Status { get; set; }
+        [JsonPropertyName("status")]
+        public required string Status { get; set; }
+
+        [JsonPropertyName("response")]
+        public required Collection<Objects> Response { get; init; }
 
     }
 }

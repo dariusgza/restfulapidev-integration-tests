@@ -1,6 +1,4 @@
 using IntegrationTests.Framework;
-using NUnit.Framework;
-using System.Net.Http;
 
 namespace IntegrationTests.Tests
 {
