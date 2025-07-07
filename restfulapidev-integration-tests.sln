@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "restfulapidev-integration-tests", "integrationTests\restfulapidev-integration-tests.csproj", "{3ECCF6CD-7DDF-48E9-985E-4AE2ABD5A37D}"
+Project("{ec1b70ea-1d0b-43a0-a9da-a6cad6002c75}") = "restfulapidev-integration-tests", "integrationTests\restfulapidev-integration-tests.csproj", "{3ECCF6CD-7DDF-48E9-985E-4AE2ABD5A37D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
