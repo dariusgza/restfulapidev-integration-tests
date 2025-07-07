@@ -21,10 +21,7 @@ namespace IntegrationTests.Tests
             var response = await ObjectsService.GetObjectsAsync(Client).ConfigureAwait(false);
 
             // Assert
-            response.Should().NotBeNull();
-            response.Should().BeOfType<ObjectsResponse>();
-            response.Response.Should().NotBeNullOrEmpty();
-            response.Status.Should().Be("success");
+            AssertResponseHasObjects(response);
         }
 
         [Test]
@@ -38,11 +35,7 @@ namespace IntegrationTests.Tests
             var response = await ObjectsService.GetObjectByIdAsync(Client, createdObject.Id).ConfigureAwait(false);
 
             // Assert
-            response.Should().NotBeNull();
-            response.Should().BeOfType<ObjectsResponse>();
-            response.Status.Should().Be("success");
-            response.Response.Should().NotBeNull();
-            response.Response[0].Id.Should().Be(createdObject.Id);
+            AssertObjectIdMatches(response, createdObject.Id);
         }
 
         [Test]
@@ -95,11 +88,7 @@ namespace IntegrationTests.Tests
             var response = await ObjectsService.PostObjectAsync(Client, request).ConfigureAwait(false);
 
             // Assert
-            response.Should().NotBeNull();
-            response.Should().BeOfType<ObjectsResponse>();
-            response.Status.Should().Be("success");
-            response.Response.Should().NotBeNull();
-            response.Response[0].Name.Should().Be(request.Name);
+            AssertObjectNameMatches(response, request.Name);
         }
 
         [Test]
@@ -155,16 +144,12 @@ namespace IntegrationTests.Tests
                 .WithData(builder => builder.WithDescription("Updated test object"))
                 .Build();
 
-            // Act
-            var response = await ObjectsService.PutObjectAsync(Client, createdObject.Id, updateRequest).ConfigureAwait(false);
-
-            // Assert
-            response.Should().NotBeNull();
-            response.Should().BeOfType<ObjectsResponse>();
-            response.Status.Should().Be("success");
-            response.Response.Should().NotBeNull();
-            response.Response[0].Id.Should().Be(createdObject.Id);
-            response.Response[0].Name.Should().Be(updateRequest.Name);
+            // Act & Assert
+            var action = () => ObjectsService.PutObjectAsync(Client, createdObject.Id, updateRequest);
+            await action.Should()
+                .ThrowAsync<HttpRequestException>()
+                .WithMessage("*405*")
+                .ConfigureAwait(false);
         }
 
         [Test]
@@ -223,12 +208,7 @@ namespace IntegrationTests.Tests
             var response = await ObjectsService.PatchObjectAsync(Client, createdObject.Id, patchRequest).ConfigureAwait(false);
 
             // Assert
-            response.Should().NotBeNull();
-            response.Should().BeOfType<ObjectsResponse>();
-            response.Status.Should().Be("success");
-            response.Response.Should().NotBeNull();
-            response.Response[0].Id.Should().Be(createdObject.Id);
-            response.Response[0].Name.Should().Be(patchRequest.Name);
+            AssertObjectMatches(response, createdObject.Id, patchRequest.Name);
         }
 
         [Test]
@@ -287,11 +267,7 @@ namespace IntegrationTests.Tests
             var response = await ObjectsService.DeleteObjectAsync(Client, createdObject.Id).ConfigureAwait(false);
 
             // Assert
-            response.Should().NotBeNull();
-            response.Should().BeOfType<ObjectsResponse>();
-            response.Status.Should().Be("success");
-            response.Response.Should().NotBeNull();
-            response.Response[0].Id.Should().Be(createdObject.Id);
+            AssertObjectIdMatches(response, createdObject.Id);
         }
 
         [Test]

@@ -1,3 +1,4 @@
+using FluentAssertions;
 using IntegrationTests.Framework;
 using IntegrationTests.Framework.Services;
 using IntegrationTests.Models;
@@ -43,5 +44,51 @@ namespace IntegrationTests.Tests
             ArgumentNullException.ThrowIfNull(obj);
             _createdObjectIds.Add(obj.Id);
         }
+
+        #region Assertion Helpers
+
+        protected static void AssertSuccessResponse(ObjectsResponse response)
+        {
+            ArgumentNullException.ThrowIfNull(response);
+            response.Should().NotBeNull();
+            response.Should().BeOfType<ObjectsResponse>();
+            response.Status.Should().Be("success");
+        }
+
+        protected static void AssertResponseHasObjects(ObjectsResponse response)
+        {
+            ArgumentNullException.ThrowIfNull(response);
+            AssertSuccessResponse(response);
+            response.Response.Should().NotBeNull();
+            response.Response.Should().NotBeEmpty();
+        }
+
+        protected static void AssertObjectIdMatches(ObjectsResponse response, string expectedId)
+        {
+            ArgumentNullException.ThrowIfNull(response);
+            ArgumentException.ThrowIfNullOrEmpty(expectedId);
+            AssertResponseHasObjects(response);
+            response.Response[0].Id.Should().Be(expectedId);
+        }
+
+        protected static void AssertObjectNameMatches(ObjectsResponse response, string expectedName)
+        {
+            ArgumentNullException.ThrowIfNull(response);
+            ArgumentException.ThrowIfNullOrEmpty(expectedName);
+            AssertResponseHasObjects(response);
+            response.Response[0].Name.Should().Be(expectedName);
+        }
+
+        protected static void AssertObjectMatches(ObjectsResponse response, string expectedId, string expectedName)
+        {
+            ArgumentNullException.ThrowIfNull(response);
+            ArgumentException.ThrowIfNullOrEmpty(expectedId);
+            ArgumentException.ThrowIfNullOrEmpty(expectedName);
+            AssertResponseHasObjects(response);
+            response.Response[0].Id.Should().Be(expectedId);
+            response.Response[0].Name.Should().Be(expectedName);
+        }
+
+        #endregion
     }
 }
