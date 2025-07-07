@@ -49,7 +49,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release
 
     - name: Run tests
-      run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+      run: dotnet test --no-build --configuration Release
 
     - name: End SonarCloud analysis
       run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
