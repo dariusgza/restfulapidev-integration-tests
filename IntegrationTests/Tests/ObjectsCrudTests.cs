@@ -2,6 +2,8 @@ using FluentAssertions;
 using IntegrationTests.Framework.Services;
 using IntegrationTests.Models;
 using NUnit.Framework;
+using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 using IntegrationTests.TestBuilders;
 
@@ -38,35 +40,33 @@ namespace IntegrationTests.Tests
             AssertObjectIdMatches(response, createdObject.Id);
         }
 
-        [Test]
+        [TestCase("")]
+        [TestCase(" ")]
         [Category("Read")]
-        [Category("Error")]
-        public async Task GivenNonExistentId_WhenGetObjectById_ThenThrowsHttpRequestException()
+        [Category("Validation")]
+        public async Task GivenInvalidId_WhenGetObjectById_ThenThrowsArgumentException(string invalidId)
         {
-            // Arrange
-            const string nonExistentId = "non-existent-id";
+            // Arrange & Act
+            var act = () => ObjectsService.GetObjectByIdAsync(Client, invalidId);
 
-            // Act & Assert
-            var action = () => ObjectsService.GetObjectByIdAsync(Client, nonExistentId);
-            await action.Should()
-                .ThrowAsync<HttpRequestException>()
-                .WithMessage("*404*")
+            // Assert
+            await act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("*ID cannot be null or empty*")
                 .ConfigureAwait(false);
         }
 
-        [Test]
+        [TestCase("999999")]
+        [TestCase("invalid-id")]
         [Category("Read")]
-        [Category("Validation")]
-        public async Task GivenInvalidId_WhenGetObjectById_ThenThrowsArgumentException()
+        [Category("Error")]
+        public async Task GivenNonExistentId_WhenGetObjectById_ThenThrowsHttpRequestException(string nonExistentId)
         {
-            // Arrange
-            const string invalidId = "";
+            // Arrange & Act
+            Func<Task<ObjectsResponse>> act = () => ObjectsService.GetObjectByIdAsync(Client, nonExistentId);
 
-            // Act & Assert
-            var action = () => ObjectsService.GetObjectByIdAsync(Client, invalidId);
-            await action.Should()
-                .ThrowAsync<ArgumentException>()
-                .WithMessage("*ID*")
+            // Assert
+            await act.Should().ThrowAsync<HttpRequestException>()
+                .WithMessage("*Response status code does not indicate success: 404 (Not Found)*")
                 .ConfigureAwait(false);
         }
 
@@ -91,22 +91,42 @@ namespace IntegrationTests.Tests
             AssertObjectNameMatches(response, request.Name);
         }
 
-        [Test]
+        [TestCase("")]
+        [TestCase(" ")]
         [Category("Create")]
         [Category("Validation")]
-        public async Task GivenEmptyName_WhenPostObject_ThenThrowsArgumentException()
+        public async Task GivenInvalidName_WhenPostObject_ThenThrowsArgumentException(string invalidName)
         {
             // Arrange
             var request = ObjectsRequestBuilder.Create()
-                .WithName("")
-                .WithData(builder => builder.WithDescription("Test object"))
+                .WithName(invalidName)
                 .Build();
 
-            // Act & Assert
-            var action = () => ObjectsService.PostObjectAsync(Client, request);
-            await action.Should()
-                .ThrowAsync<ArgumentException>()
-                .WithMessage("*Name*")
+            // Act
+            var act = () => ObjectsService.PostObjectAsync(Client, request);
+
+            // Assert
+            await act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("*name cannot be null or empty*")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Category("Create")]
+        [Category("Validation")]
+        public async Task GivenNullName_WhenPostObject_ThenThrowsArgumentException()
+        {
+            // Arrange
+            var request = ObjectsRequestBuilder.Create()
+                .WithName(null!)
+                .Build();
+
+            // Act
+            var act = () => ObjectsService.PostObjectAsync(Client, request);
+
+            // Assert
+            await act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("*name cannot be null or empty*")
                 .ConfigureAwait(false);
         }
 
@@ -122,8 +142,8 @@ namespace IntegrationTests.Tests
                 .Build();
 
             // Act & Assert
-            var action = () => ObjectsService.PostObjectAsync(Client, request);
-            await action.Should()
+            var act = () => ObjectsService.PostObjectAsync(Client, request);
+            await act.Should()
                 .ThrowAsync<ArgumentNullException>()
                 .ConfigureAwait(false);
         }
@@ -145,8 +165,8 @@ namespace IntegrationTests.Tests
                 .Build();
 
             // Act & Assert
-            var action = () => ObjectsService.PutObjectAsync(Client, createdObject.Id, updateRequest);
-            await action.Should()
+            var act = () => ObjectsService.PutObjectAsync(Client, createdObject.Id, updateRequest);
+            await act.Should()
                 .ThrowAsync<HttpRequestException>()
                 .WithMessage("*405*")
                 .ConfigureAwait(false);
@@ -165,8 +185,8 @@ namespace IntegrationTests.Tests
                 .Build();
 
             // Act & Assert
-            var action = () => ObjectsService.PutObjectAsync(Client, nonExistentId, request);
-            await action.Should()
+            var act = () => ObjectsService.PutObjectAsync(Client, nonExistentId, request);
+            await act.Should()
                 .ThrowAsync<HttpRequestException>()
                 .WithMessage("*404*")
                 .ConfigureAwait(false);
@@ -182,8 +202,8 @@ namespace IntegrationTests.Tests
             ObjectsRequest? request = null;
 
             // Act & Assert
-            var action = () => ObjectsService.PutObjectAsync(Client, createdObject.Id, request!);
-            await action.Should()
+            var act = () => ObjectsService.PutObjectAsync(Client, createdObject.Id, request!);
+            await act.Should()
                 .ThrowAsync<ArgumentNullException>()
                 .ConfigureAwait(false);
         }
@@ -211,42 +231,44 @@ namespace IntegrationTests.Tests
             AssertObjectMatches(response, createdObject.Id, patchRequest.Name);
         }
 
-        [Test]
+        [TestCase("999999", "Updated Name")]
+        [TestCase("invalid-id", "New Name")]
         [Category("Update")]
         [Category("Error")]
-        public async Task GivenNonExistentId_WhenPatchObject_ThenThrowsHttpRequestException()
+        public async Task GivenNonExistentId_WhenPatchObject_ThenThrowsHttpRequestException(string nonExistentId, string updatedName)
         {
             // Arrange
-            const string nonExistentId = "non-existent-id";
             var request = ObjectsRequestBuilder.Create()
-                .WithName("patched-object")
-                .WithData(builder => builder.WithDescription("Patched test object"))
+                .WithName(updatedName)
+                .WithData(builder => builder.WithDescription("Updated test object"))
                 .Build();
 
             // Act & Assert
-            var action = () => ObjectsService.PatchObjectAsync(Client, nonExistentId, request);
-            await action.Should()
+            var act = () => ObjectsService.PatchObjectAsync(Client, nonExistentId, request);
+            await act.Should()
                 .ThrowAsync<HttpRequestException>()
                 .WithMessage("*404*")
                 .ConfigureAwait(false);
         }
 
-        [Test]
+        [TestCase("", "Valid Name", Description = "Empty Description")]
+        [TestCase("Valid Description", "", Description = "Empty Name")]
+        [TestCase(" ", " ", Description = "Whitespace Only")]
         [Category("Update")]
         [Category("Validation")]
-        public async Task GivenEmptyRequest_WhenPatchObject_ThenThrowsArgumentException()
+        public async Task GivenEmptyRequest_WhenPatchObject_ThenThrowsArgumentException(string description, string name)
         {
             // Arrange
             var createdObject = await CreateTestObject("patch-empty-test").ConfigureAwait(false);
 
             var emptyRequest = ObjectsRequestBuilder.Create()
-                .WithName("")
-                .WithData(builder => builder.WithDescription(""))
+                .WithName(name)
+                .WithData(builder => builder.WithDescription(description))
                 .Build();
 
             // Act & Assert
-            var action = () => ObjectsService.PatchObjectAsync(Client, createdObject.Id, emptyRequest);
-            await action.Should()
+            var act = () => ObjectsService.PatchObjectAsync(Client, createdObject.Id, emptyRequest);
+            await act.Should()
                 .ThrowAsync<ArgumentException>()
                 .WithMessage("*Name*")
                 .ConfigureAwait(false);
@@ -270,33 +292,30 @@ namespace IntegrationTests.Tests
             AssertObjectIdMatches(response, createdObject.Id);
         }
 
-        [Test]
+        [TestCase("999999", Description = "Numeric non-existent ID")]
+        [TestCase("invalid-id", Description = "Text non-existent ID")]
+        [TestCase("00000000-0000-0000-0000-000000000000", Description = "Zero GUID")]
         [Category("Delete")]
         [Category("Error")]
-        public async Task GivenNonExistentId_WhenDeleteObject_ThenThrowsHttpRequestException()
+        public async Task GivenNonExistentId_WhenDeleteObject_ThenThrowsHttpRequestException(string nonExistentId)
         {
-            // Arrange
-            const string nonExistentId = "non-existent-id";
-
             // Act & Assert
-            var action = () => ObjectsService.DeleteObjectAsync(Client, nonExistentId);
-            await action.Should()
+            var act = () => ObjectsService.DeleteObjectAsync(Client, nonExistentId);
+            await act.Should()
                 .ThrowAsync<HttpRequestException>()
                 .WithMessage("*404*")
                 .ConfigureAwait(false);
         }
 
-        [Test]
+        [TestCase("", Description = "Empty string")]
+        [TestCase(" ", Description = "Space")]
         [Category("Delete")]
         [Category("Validation")]
-        public async Task GivenEmptyId_WhenDeleteObject_ThenThrowsArgumentException()
+        public async Task GivenInvalidId_WhenDeleteObject_ThenThrowsArgumentException(string invalidId)
         {
-            // Arrange
-            const string emptyId = "";
-
             // Act & Assert
-            var action = () => ObjectsService.DeleteObjectAsync(Client, emptyId);
-            await action.Should()
+            var act = () => ObjectsService.DeleteObjectAsync(Client, invalidId);
+            await act.Should()
                 .ThrowAsync<ArgumentException>()
                 .WithMessage("*ID*")
                 .ConfigureAwait(false);
