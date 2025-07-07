@@ -30,7 +30,7 @@ namespace IntegrationTests.Framework
             ArgumentNullException.ThrowIfNull(endpoint);
             ArgumentException.ThrowIfNullOrEmpty(id);
             
-            var requestUri = new Uri(endpoint, Uri.EscapeDataString(id));
+            var requestUri = new Uri(endpoint.ToString().TrimEnd('/') + "/" + Uri.EscapeDataString(id), UriKind.Relative);
             return SendRequestAsync<T>(() => _client.GetAsync(requestUri));
         }
         
@@ -43,22 +43,22 @@ namespace IntegrationTests.Framework
             return SendRequestAsync<TResponse>(() => _client.PostAsync(endpoint, content));
         }
 
-        internal Task<T?> PutAsync<T>(Uri endpoint, T requestBody)
+        internal Task<TResponse?> PutAsync<TRequest, TResponse>(Uri endpoint, TRequest requestBody)
         {
             ArgumentNullException.ThrowIfNull(endpoint);
             ArgumentNullException.ThrowIfNull(requestBody);
 
             var content = CreateJsonContent(requestBody);
-            return SendRequestAsync<T>(() => _client.PutAsync(endpoint, content));
+            return SendRequestAsync<TResponse>(() => _client.PutAsync(endpoint, content));
         }
 
-        internal Task<T?> PatchAsync<T>(Uri endpoint, T requestBody)
+        internal Task<TResponse?> PatchAsync<TRequest, TResponse>(Uri endpoint, TRequest requestBody)
         {
             ArgumentNullException.ThrowIfNull(endpoint);
             ArgumentNullException.ThrowIfNull(requestBody);
 
-            using var content = CreateJsonContent(requestBody);
-            return SendRequestAsync<T>(() => _client.PatchAsync(endpoint, content));
+            var content = CreateJsonContent(requestBody);
+            return SendRequestAsync<TResponse>(() => _client.PatchAsync(endpoint, content));
         }
 
         internal Task<T?> DeleteAsync<T>(Uri endpoint)
@@ -79,9 +79,9 @@ namespace IntegrationTests.Framework
         {
             using var response = await requestFunc().ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
+            await using var responseStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
-            var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            return JsonSerializer.Deserialize<T>(content, JsonOptions);
+            return await JsonSerializer.DeserializeAsync<T>(responseStream, JsonOptions).ConfigureAwait(false);
         }
     }
 }
