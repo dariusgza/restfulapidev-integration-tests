@@ -35,13 +35,12 @@ jobs:
       run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
     - name: Begin SonarCloud analysis
-      uses: SonarSource/sonarcloud-github-action@v2
-      with:
-        args: >
-            /k:"${{ secrets.SONAR_PROJECT_KEY }}" \
-            /o:"${{ secrets.SONAR_ORGANIZATION }}" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
+      run: |
+        dotnet sonarscanner begin \
+          /k:"${{ secrets.SONAR_PROJECT_KEY }}" \
+          /o:"${{ secrets.SONAR_ORGANIZATION }}" \
+          /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+          /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
 
     - name: Restore dependencies
       run: dotnet restore
