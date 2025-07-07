@@ -338,7 +338,9 @@ namespace IntegrationTests.Tests
                 .Build();
 
             var response = await ObjectsService.PostObjectAsync(Client, request).ConfigureAwait(false);
-            return response.Response[0];
+            var createdObject = response.Response[0];
+            TrackObject(createdObject);
+            return createdObject;
         }
 
         #endregion
