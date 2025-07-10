@@ -34,14 +34,6 @@ jobs:
     - name: Set up PATH for .NET tools
       run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
 
-    - name: Begin SonarCloud analysis
-      run: |
-        dotnet sonarscanner begin \
-          /k:"${{ secrets.SONAR_PROJECT_KEY }}" \
-          /o:"${{ secrets.SONAR_ORGANIZATION }}" \
-          /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-          /d:sonar.host.url="${{ secrets.SONAR_HOST_URL }}"
-
     - name: Restore dependencies
       run: dotnet restore
 
@@ -50,9 +42,6 @@ jobs:
 
     - name: Run tests
       run: dotnet test --no-build --configuration Release
-
-    - name: End SonarCloud analysis
-      run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
     - name: Upload test results
       if: always()
