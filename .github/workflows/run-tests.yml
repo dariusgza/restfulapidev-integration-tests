@@ -23,50 +23,68 @@ jobs:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
     steps:
-      - name: Show current directory and list files (debug)
-        run: |
-          pwd
-          ls -lR
+      - name: Show files (debug)
+        run: ls -l
+        working-directory: ${{ github.workspace }}
+
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
+
       - name: Install SonarScanner for .NET
         run: dotnet tool install --global dotnet-sonarscanner
+
       - name: Set up PATH for .NET tools
         run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
       - name: Restore dependencies
-        run: dotnet restore ./restfulapidev-integration-tests.sln
+        run: dotnet restore restfulapidev-integration-tests.sln
+        working-directory: ${{ github.workspace }}
+
       - name: Build solution
-        run: dotnet build ./restfulapidev-integration-tests.sln --no-restore --configuration Release
+        run: dotnet build restfulapidev-integration-tests.sln --no-restore --configuration Release
+        working-directory: ${{ github.workspace }}
+
       - name: Run tests
-        run: dotnet test ./restfulapidev-integration-tests.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test restfulapidev-integration-tests.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+        working-directory: ${{ github.workspace }}
+
       - name: Find test results (debug)
         run: find . -name 'test-results.trx' -print
+        working-directory: ${{ github.workspace }}
+
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: '**/test-results.trx'
+
       - name: Publish .NET Test Results
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: '**/test-results.trx'
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
+
       - name: Install newman
         run: npm install -g newman
+
       - name: Run Postman collection with newman
         run: |
           newman run ./src/ManualTests/PostmanColleciton/api.restfull.dev.demo.postman_collection.json --reporters cli,junit --reporter-junit-export=postman-results.xml
+
       - name: List files after newman (debug)
         run: ls -l
+
       - name: Upload Postman test results
         if: always()
         uses: actions/upload-artifact@v4
