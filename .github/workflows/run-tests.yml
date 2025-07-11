@@ -28,10 +28,10 @@ jobs:
       # - name: Show files (debug)
       #   run: ls -l
       #   working-directory: ${{ github.workspace }}
-      - name: SonarScanner Begin
-        run: |
-          dotnet sonarscanner begin /k:"${{ env.SONAR_PROJECT_KEY }}" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.login="${{ env.SONAR_TOKEN }}"
-        working-directory: ${{ github.workspace }}
+      # - name: SonarScanner Begin
+      #  run: |
+      #    dotnet sonarscanner begin /k:"${{ env.SONAR_PROJECT_KEY }}" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.login="${{ env.SONAR_TOKEN }}"
+      #  working-directory: ${{ github.workspace }}
 
       - name: Checkout code
         uses: actions/checkout@v4
