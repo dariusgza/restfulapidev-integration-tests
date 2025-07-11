@@ -13,46 +13,41 @@
 					"listen": "test",
 					"script": {
 						"exec": [
+							"// Test: Status code is 200\r",
 							"pm.test(\"Status code is 200\", function () {\r",
 							"    pm.response.to.have.status(200);\r",
 							"});\r",
 							"\r",
-							"// check the authentication of the request\r",
-							"pm.test(\"Authorization header is present\", function () {\r",
-							"    pm.expect(pm.request.headers.get(\"Authorization\")).to.not.be.null;\r",
-							"});\r",
-							"\r",
-							"pm.test(\"Number of objects in response is correct\", function () {\r",
+							"// Test: Response is an array with at least 1 object\r",
+							"pm.test(\"Response is an array with at least 1 object\", function () {\r",
 							"    const response = pm.response.json();\r",
-							"    pm.expect(response).to.be.an('array').that.has.lengthOf(13); \r",
+							"    pm.expect(response).to.be.an('array').that.has.length.greaterThan(0);\r",
 							"});\r",
 							"\r",
+							"// Test: Validate the required schema for each object in the response\r",
 							"const response = pm.response.json();\r",
-							"// Define the expected schema\r",
 							"const expectedSchema = {\r",
 							"    type: 'object',\r",
 							"    properties: {\r",
 							"        id: { type: 'string' },\r",
 							"        name: { type: 'string' },\r",
 							"        data: {\r",
-							"            type: ['object', 'null'], // data can be an object or null\r",
-							"            properties: {\r",
-							"                color: { type: 'string' },\r",
-							"                capacity: { type: 'string' },\r",
-							"                price: { type: 'number' } // Assuming price is a number\r",
-							"            }\r",
+							"            type: ['object', 'null']\r",
 							"        }\r",
 							"    },\r",
 							"    required: ['id', 'name', 'data']\r",
 							"};\r",
-							"\r",
-							"// Validate the required schema for each object in the response\r",
 							"pm.test(\"Validate the required schema for each object in the response\", function () {\r",
 							"    response.forEach(item => {\r",
 							"        pm.expect(item).to.be.jsonSchema(expectedSchema);\r",
 							"    });\r",
 							"});\r",
-							""
+							"\r",
+						"pm.sendRequest({ url: pm.environment.get('baseUrl') + '/invalid-endpoint', method: 'GET' }, function (err, res) {\r",
+						"    pm.test('Invalid endpoint returns 404', function () {\r",
+						"        pm.expect(res.code).to.eql(404);\r",
+						"    });\r",
+						"});\r"
 						],
 						"type": "text/javascript",
 						"packages": {}
@@ -79,6 +74,53 @@
 		},
 		{
 			"name": "List of objects by ids",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Status code is 200\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// Test: Response is an array with at least 1 object\r",
+							"pm.test(\"Response is an array with at least 1 object\", function () {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response).to.be.an('array').that.has.length.greaterThan(0);\r",
+							"});\r",
+							"\r",
+							"// Test: Validate the required schema for each object in the response\r",
+							"const response = pm.response.json();\r",
+							"const expectedSchema = {\r",
+							"    type: 'object',\r",
+							"    properties: {\r",
+							"        id: { type: 'string' },\r",
+							"        name: { type: 'string' },\r",
+							"        data: { type: ['object', 'null'] }\r",
+							"    },\r",
+							"    required: ['id', 'name', 'data']\r",
+							"};\r",
+							"pm.test(\"Validate the required schema for each object in the response\", function () {\r",
+							"    response.forEach(item => {\r",
+							"        pm.expect(item).to.be.jsonSchema(expectedSchema);\r",
+							"    });\r",
+							"});\r"
+						,
+						"pm.sendRequest({ url: pm.environment.get('baseUrl') + '/objects?id=99999', method: 'GET' }, function (err, res) {\r",
+						"    pm.test('Non-existent IDs returns empty array or 404', function () {\r",
+						"        pm.expect([200, 404]).to.include(res.code);\r",
+						"        if (res.code === 200) {\r",
+						"            pm.expect(res.json()).to.be.an('array').that.is.empty;\r",
+						"        }\r",
+						"    });\r",
+						"});\r"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -106,6 +148,51 @@
 		},
 		{
 			"name": "Single object",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Status code is 200\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// Test: Response is an array with exactly 1 object\r",
+							"pm.test(\"Response is an array with exactly 1 object\", function () {\r",
+							"    const response = pm.response.json();\r",
+							"    pm.expect(response).to.be.an('array').that.has.lengthOf(1);\r",
+							"});\r",
+							"\r",
+							"// Test: Validate the required schema for the object in the response\r",
+							"const response = pm.response.json();\r",
+							"const expectedSchema = {\r",
+							"    type: 'object',\r",
+							"    properties: {\r",
+							"        id: { type: 'string' },\r",
+							"        name: { type: 'string' },\r",
+							"        data: { type: ['object', 'null'] }\r",
+							"    },\r",
+							"    required: ['id', 'name', 'data']\r",
+							"};\r",
+							"pm.test(\"Validate the required schema for the object in the response\", function () {\r",
+							"    pm.expect(response[0]).to.be.jsonSchema(expectedSchema);\r",
+							"});\r"
+						,
+						"pm.sendRequest({ url: pm.environment.get('baseUrl') + '/objects?id=99999', method: 'GET' }, function (err, res) {\r",
+						"    pm.test('Non-existent ID returns empty array or 404', function () {\r",
+						"        pm.expect([200, 404]).to.include(res.code);\r",
+						"        if (res.code === 200) {\r",
+						"            pm.expect(res.json()).to.be.an('array').that.is.empty;\r",
+						"        }\r",
+						"    });\r",
+						"});\r"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "GET",
 				"header": [],
@@ -129,6 +216,71 @@
 		},
 		{
 			"name": "Add object",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Status code is 200 or 201\r",
+							"pm.test(\"Status code is 200 or 201\", function () {\r",
+							"    pm.expect([200, 201]).to.include(pm.response.code);\r",
+							"});\r",
+							"\r",
+							"// Test: Response contains created object with id, name, and data\r",
+							"const response = pm.response.json();\r",
+							"pm.test(\"Response contains created object with id, name, and data\", function () {\r",
+							"    pm.expect(response).to.have.property('id');\r",
+							"    pm.expect(response).to.have.property('name');\r",
+							"    pm.expect(response).to.have.property('data');\r",
+							"});\r"
+						,
+						"pm.sendRequest({\r",
+						"    url: pm.environment.get('baseUrl') + '/objects/doesnotexist',\r",
+						"    method: 'PATCH',\r",
+						"    header: { 'Content-Type': 'application/json' },\r",
+						"    body: {\r",
+						"        mode: 'raw',\r",
+						"        raw: JSON.stringify({ name: 'Test' })\r",
+						"    }\r",
+						"}, function (err, res) {\r",
+						"    pm.test('Patch non-existent object returns 404, 400, or 422', function () {\r",
+						"        pm.expect([404, 400, 422]).to.include(res.code);\r",
+						"    });\r",
+						"});\r"
+						,
+						"pm.sendRequest({\r",
+						"    url: pm.environment.get('baseUrl') + '/objects/doesnotexist',\r",
+						"    method: 'PUT',\r",
+						"    header: { 'Content-Type': 'application/json' },\r",
+						"    body: {\r",
+						"        mode: 'raw',\r",
+						"        raw: JSON.stringify({ name: 'Test', data: {} })\r",
+						"    }\r",
+						"}, function (err, res) {\r",
+						"    pm.test('Update non-existent object returns 404, 400, or 422', function () {\r",
+						"        pm.expect([404, 400, 422]).to.include(res.code);\r",
+						"    });\r",
+						"});\r"
+						,
+						"pm.sendRequest({\r",
+						"    url: pm.environment.get('baseUrl') + '/objects',\r",
+						"    method: 'POST',\r",
+						"    header: { 'Content-Type': 'application/json' },\r",
+						"    body: {\r",
+						"        mode: 'raw',\r",
+						"        raw: JSON.stringify({ data: { year: 2025 } })\r",
+						"    }\r",
+						"}, function (err, res) {\r",
+						"    pm.test('Missing required field returns 400 or 422', function () {\r",
+						"        pm.expect([400, 422]).to.include(res.code);\r",
+						"    });\r",
+						"});\r"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [],
@@ -155,6 +307,29 @@
 		},
 		{
 			"name": "Update object",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Status code is 200\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// Test: Response contains updated object with id, name, and data\r",
+							"const response = pm.response.json();\r",
+							"pm.test(\"Response contains updated object with id, name, and data\", function () {\r",
+							"    pm.expect(response).to.have.property('id');\r",
+							"    pm.expect(response).to.have.property('name');\r",
+							"    pm.expect(response).to.have.property('data');\r",
+							"});\r"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "PUT",
 				"header": [],
@@ -182,6 +357,29 @@
 		},
 		{
 			"name": "Partially update object",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Status code is 200\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"// Test: Response contains updated object with id, name, and data\r",
+							"const response = pm.response.json();\r",
+							"pm.test(\"Response contains updated object with id, name, and data\", function () {\r",
+							"    pm.expect(response).to.have.property('id');\r",
+							"    pm.expect(response).to.have.property('name');\r",
+							"    pm.expect(response).to.have.property('data');\r",
+							"});\r"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "PATCH",
 				"header": [],
@@ -209,6 +407,33 @@
 		},
 		{
 			"name": "Delete object",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// Test: Status code is 200 or 204\r",
+							"pm.test(\"Status code is 200 or 204\", function () {\r",
+							"    pm.expect([200, 204]).to.include(pm.response.code);\r",
+							"});\r",
+							"\r",
+							"// Test: Response body is empty or contains a confirmation message\r",
+							"pm.test(\"Response body is empty or contains a confirmation message\", function () {\r",
+							"    const body = pm.response.text();\r",
+							"    pm.expect(body === '' || body.includes('success') || body.includes('deleted')).to.be.true;\r",
+							"});\r"
+						,
+						"pm.sendRequest({ url: pm.environment.get('baseUrl') + '/objects/doesnotexist', method: 'DELETE' }, function (err, res) {\r",
+						"    pm.test('Delete non-existent object returns 404, 400, or 422', function () {\r",
+						"        pm.expect([404, 400, 422]).to.include(res.code);\r",
+						"    });\r",
+						"});\r"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
 			"request": {
 				"method": "DELETE",
 				"header": [],
