@@ -22,9 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
     steps:
-      - name: Show files (debug)
-        run: ls -l
+      # - name: Show files (debug)
+      #   run: ls -l
+      #   working-directory: ${{ github.workspace }}
+      - name: SonarScanner Begin
+        run: |
+          dotnet sonarscanner begin /k:"${{ env.SONAR_PROJECT_KEY }}" /d:sonar.host.url="${{ env.SONAR_HOST_URL }}" /d:sonar.login="${{ env.SONAR_TOKEN }}"
         working-directory: ${{ github.workspace }}
 
       - name: Checkout code
@@ -50,25 +56,28 @@ jobs:
         working-directory: ${{ github.workspace }}
 
       - name: Run tests
-        run: dotnet test restfulapidev-integration-tests.sln --no-build --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test restfulapidev-integration-tests.sln --no-build --configuration Release --logger "trx;LogFileName=integration-test-results.trx"
+        working-directory: ${{ github.workspace }}
+      - name: SonarScanner End
+        run: dotnet sonarscanner end /d:sonar.login="${{ env.SONAR_TOKEN }}"
         working-directory: ${{ github.workspace }}
 
-      - name: Find test results (debug)
-        run: find . -name 'test-results.trx' -print
-        working-directory: ${{ github.workspace }}
+      # - name: Find test results (debug)
+      #   run: find . -name 'integration-test-results.trx' -print
+      #   working-directory: ${{ github.workspace }}
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: '**/test-results.trx'
+          path: '**/integration-test-results.trx'
 
       - name: Publish .NET Test Results
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: '**/test-results.trx'
+          files: '**/integration-test-results.trx'
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -80,10 +89,27 @@ jobs:
 
       - name: Run Postman collection with newman
         run: |
-          newman run ./src/ManualTests/PostmanColleciton/api.restfull.dev.demo.postman_collection.json --reporters cli,junit --reporter-junit-export=postman-results.xml
+          newman run ./src/ManualTests/PostmanCollection/api.restfull.dev.demo.postman_collection.json --reporters cli,junit --reporter-junit-export=postman-results.xml
 
-      - name: List files after newman (debug)
-        run: ls -l
+      - name: Add Newman summary to workflow
+        if: always()
+        run: |
+          if [ -f postman-results.xml ]; then
+            total=$(grep -o '<testcase' postman-results.xml | wc -l)
+            failed=$(grep -o '<failure' postman-results.xml | wc -l)
+            passed=$((total - failed))
+            echo "## Newman API Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "| $total | $passed | $failed |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Newman API Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "No postman-results.xml file found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      # - name: List files after newman (debug)
+      #   run: ls -l
 
       - name: Upload Postman test results
         if: always()
@@ -104,9 +130,19 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: 'https://restful-api.dev/'
           allow_issue_writing: false
-      - name: Upload ZAP Scan results
+      - name: Upload ZAP Scan results (Markdown, HTML, JSON)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-results
-          path: '**/zap-results.xml'
+          path: |
+            report_md.md
+            report_html.html
+            report_json.json
+
+      - name: Add ZAP Scan Markdown report to summary
+        if: always()
+        run: |
+          if [ -f report_md.md ]; then
+            cat report_md.md >> $GITHUB_STEP_SUMMARY
+          fi
