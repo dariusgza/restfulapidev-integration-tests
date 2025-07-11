@@ -104,7 +104,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: 'https://restful-api.dev/'
           rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a'
+          cmd_options: '-a create_issue: false -a report_format=xml -a report_file=zap-results.xml -a report_title="ZAP Scan Results"'
       - name: Upload ZAP Scan results
         if: always()
         uses: actions/upload-artifact@v4
