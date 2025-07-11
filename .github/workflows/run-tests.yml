@@ -58,9 +58,10 @@ jobs:
       - name: Run tests
         run: dotnet test restfulapidev-integration-tests.sln --no-build --configuration Release --logger "trx;LogFileName=integration-test-results.trx"
         working-directory: ${{ github.workspace }}
-      - name: SonarScanner End
-        run: dotnet sonarscanner end /d:sonar.login="${{ env.SONAR_TOKEN }}"
-        working-directory: ${{ github.workspace }}
+
+      # - name: SonarScanner End
+      #   run: dotnet sonarscanner end /d:sonar.login="${{ env.SONAR_TOKEN }}"
+      #   working-directory: ${{ github.workspace }}
 
       # - name: Find test results (debug)
       #   run: find . -name 'integration-test-results.trx' -print
