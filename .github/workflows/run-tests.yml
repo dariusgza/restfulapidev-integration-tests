@@ -55,10 +55,11 @@ jobs:
       - name: Run tests
         id: test-run
         run: |
+          mkdir -p ./test-results
           dotnet test IntegrationTests/restfulapidev-integration-tests.csproj \
             --no-build \
             --configuration ${{ env.BUILD_CONFIGURATION }} \
-            --logger "trx;LogFileName=integration-test-results.trx" \
+            --logger "trx;LogFileName=${{ github.workspace }}/test-results/integration-test-results.trx" \
             --logger "console;verbosity=normal"
           echo "test-results=success" >> $GITHUB_OUTPUT
         working-directory: ${{ github.workspace }}
@@ -74,14 +75,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dotnet-test-results
-          path: 'IntegrationTests/**/integration-test-results.trx'
+          path: 'test-results/integration-test-results.trx'
           retention-days: 30
 
       - name: Publish .NET Test Results
         if: always()
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: 'IntegrationTests/**/integration-test-results.trx'
+          files: 'test-results/integration-test-results.trx'
           check_name: '.NET Integration Test Results'
 
   postman-tests:
