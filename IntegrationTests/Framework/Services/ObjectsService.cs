@@ -73,8 +73,10 @@ namespace IntegrationTests.Framework.Services
             ArgumentNullException.ThrowIfNull(client);
             ArgumentException.ThrowIfNullOrEmpty(id);
             ArgumentNullException.ThrowIfNull(requestBody);
-            if (requestBody.Data == null || string.IsNullOrWhiteSpace(requestBody.Name))
+            if (requestBody.Data == null && string.IsNullOrWhiteSpace(requestBody.Name))
                 throw new ArgumentException("Request must contain non-empty Name and Data.", nameof(requestBody));
+            if (string.IsNullOrWhiteSpace(requestBody.Name))
+                throw new ArgumentException("Name cannot be empty.", nameof(requestBody));
 
             var requestUri = new Uri($"{Endpoints.Objects}/{id}", UriKind.Relative);
             var obj = await client.PatchAsync<ObjectsRequest, Objects>(requestUri, requestBody).ConfigureAwait(false)
@@ -90,6 +92,7 @@ namespace IntegrationTests.Framework.Services
         public static async Task<ObjectsResponse> DeleteObjectAsync(ObjectsClient client, string id)
         {
             ArgumentNullException.ThrowIfNull(client);
+            ArgumentException.ThrowIfNullOrWhiteSpace(id);
 
             var requestUri = new Uri($"{Endpoints.Objects}/{id}", UriKind.Relative);
             var deleteResponse = await client.DeleteAsync<DeleteResponse>(requestUri).ConfigureAwait(false)

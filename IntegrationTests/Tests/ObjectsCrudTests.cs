@@ -250,7 +250,6 @@ namespace IntegrationTests.Tests
                 .ConfigureAwait(false);
         }
 
-        [TestCase("", "Valid Name", Description = "Empty Description")]
         [TestCase("Valid Description", "", Description = "Empty Name")]
         [TestCase(" ", " ", Description = "Whitespace Only")]
         [Category("Update")]
@@ -270,6 +269,26 @@ namespace IntegrationTests.Tests
             await act.Should()
                 .ThrowAsync<ArgumentException>()
                 .WithMessage("*Name*")
+                .ConfigureAwait(false);
+        }
+
+        [Test]
+        [Category("Update")]
+        [Category("Validation")]
+        public async Task GivenEmptyDescriptionWithValidName_WhenPatchObject_ThenDoesNotThrowException()
+        {
+            // Arrange
+            var createdObject = await CreateTestObject("patch-empty-description-test").ConfigureAwait(false);
+
+            var request = ObjectsRequestBuilder.Create()
+                .WithName("Valid Name")
+                .WithData(builder => builder.WithDescription(""))
+                .Build();
+
+            // Act & Assert
+            var act = () => ObjectsService.PatchObjectAsync(Client, createdObject.Id, request);
+            await act.Should()
+                .NotThrowAsync<ArgumentException>()
                 .ConfigureAwait(false);
         }
 
@@ -307,7 +326,6 @@ namespace IntegrationTests.Tests
         }
 
         [TestCase("", Description = "Empty string")]
-        //[TestCase(" ", Description = "Space")]
         [Category("Delete")]
         [Category("Validation")]
         public async Task GivenInvalidId_WhenDeleteObject_ThenThrowsArgumentException(string invalidId)
@@ -315,8 +333,8 @@ namespace IntegrationTests.Tests
             // Act & Assert
             var act = () => ObjectsService.DeleteObjectAsync(Client, invalidId);
             await act.Should()
-                .ThrowAsync<JsonException>()
-                .WithMessage("*Object with id =   doesn't exist.*")
+                .ThrowAsync<ArgumentException>()
+                .WithMessage("*The value cannot be an empty string or composed entirely of whitespace. (Parameter 'id')")
                 .ConfigureAwait(false);
         }
 
@@ -329,8 +347,8 @@ namespace IntegrationTests.Tests
             // Act & Assert
             var act = () => ObjectsService.DeleteObjectAsync(Client, whitespaceId);
 
-            await act.Should().ThrowAsync<JsonException>()
-                .WithMessage("*Object with id =   doesn't exist.*")
+            await act.Should().ThrowAsync<ArgumentException>()
+                .WithMessage("*The value cannot be an empty string or composed entirely of whitespace. (Parameter 'id')")
                 .ConfigureAwait(false);
         }
 
