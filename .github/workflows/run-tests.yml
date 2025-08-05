@@ -97,8 +97,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: package.json
 
       - name: Install Newman
         run: npm install -g newman
@@ -106,10 +104,13 @@ jobs:
       - name: Run Postman collection with Newman
         id: newman-run
         run: |
+          # Add delay to avoid rate limiting
+          sleep 5
           newman run ./src/ManualTests/PostmanCollection/api.restfull.dev.demo.postman_collection.json \
             --reporters cli,junit \
             --reporter-junit-export=postman-results.xml \
             --timeout-request 30000 \
+            --delay-request 1000 \
             --bail
         continue-on-error: true
 
