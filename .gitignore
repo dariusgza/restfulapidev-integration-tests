@@ -9,9 +9,11 @@ coverage/
 .vscode/
 .vs/
 .idea/
+.claude/
 *.user
 *.suo
 *.swp
+CLAUDE.md
 
 # OS-specific files
 .DS_Store
