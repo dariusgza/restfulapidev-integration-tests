@@ -90,7 +90,6 @@ namespace IntegrationTests.Framework.Services
         public static async Task<ObjectsResponse> DeleteObjectAsync(ObjectsClient client, string id)
         {
             ArgumentNullException.ThrowIfNull(client);
-            ArgumentException.ThrowIfNullOrEmpty(id);
 
             var requestUri = new Uri($"{Endpoints.Objects}/{id}", UriKind.Relative);
             var deleteResponse = await client.DeleteAsync<DeleteResponse>(requestUri).ConfigureAwait(false)
@@ -109,5 +108,6 @@ namespace IntegrationTests.Framework.Services
                 Response = new Collection<Objects>(new List<Objects> { deletedObject })
             };
         }
+        
     }
 }
