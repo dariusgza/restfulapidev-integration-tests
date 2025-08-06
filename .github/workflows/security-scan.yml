@@ -8,11 +8,6 @@ on:
         required: false
         default: 'https://api.restful-api.dev/'
         type: string
-      zap-version:
-        description: 'ZAP Action version'
-        required: false
-        default: 'v0.14.0'
-        type: string
       fail-on-issues:
         description: 'Whether to fail the action on security issues'
         required: false
@@ -39,7 +34,7 @@ jobs:
 
       - name: Run ZAP Baseline Scan
         id: zap-scan
-        uses: zaproxy/action-baseline@${{ inputs.zap-version }}
+        uses: zaproxy/action-baseline@v0.14.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target: ${{ inputs.target-url }}

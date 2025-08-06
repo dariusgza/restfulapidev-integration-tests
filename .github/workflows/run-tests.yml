@@ -27,8 +27,8 @@ jobs:
     name: .NET Integration Tests
     uses: ./.github/workflows/dotnet-tests.yml
     with:
-      dotnet-version: ${{ env.DOTNET_VERSION }}
-      build-configuration: ${{ env.BUILD_CONFIGURATION }}
+      dotnet-version: '9.0.x'
+      build-configuration: 'Release'
     permissions:
       checks: write
       contents: read
@@ -39,7 +39,7 @@ jobs:
     if: always()
     uses: ./.github/workflows/postman-tests.yml
     with:
-      node-version: ${{ env.NODE_VERSION }}
+      node-version: '20.x'
     permissions:
       contents: read
 
@@ -64,6 +64,6 @@ jobs:
       dotnet-result: ${{ needs.dotnet-tests.result }}
       postman-result: ${{ needs.postman-tests.result }}
       security-result: ${{ needs.security-scan.result }}
-      workflow-status: ${{ job.status }}
+      workflow-status: 'completed'
     permissions:
       contents: read
