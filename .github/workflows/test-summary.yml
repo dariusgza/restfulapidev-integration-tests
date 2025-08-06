@@ -1,0 +1,63 @@
+name: Test Summary
+
+on:
+  workflow_call:
+    inputs:
+      dotnet-result:
+        description: 'Result of .NET tests job'
+        required: true
+        type: string
+      postman-result:
+        description: 'Result of Postman tests job'
+        required: true
+        type: string
+      security-result:
+        description: 'Result of security scan job'
+        required: true
+        type: string
+      workflow-status:
+        description: 'Overall workflow status'
+        required: false
+        default: 'unknown'
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate final summary
+        run: |
+          echo "# 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # .NET Tests
+          if [ "${{ inputs.dotnet-result }}" == "success" ]; then
+            echo "✅ **.NET Integration Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **.NET Integration Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Postman Tests
+          if [ "${{ inputs.postman-result }}" == "success" ]; then
+            echo "✅ **Postman API Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ inputs.postman-result }}" == "failure" ]; then
+            echo "❌ **Postman API Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ **Postman API Tests**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Security Scan
+          if [ "${{ inputs.security-result }}" == "success" ]; then
+            echo "✅ **Security Scan**: Completed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ inputs.security-result }}" == "failure" ]; then
+            echo "⚠️ **Security Scan**: Issues found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ **Security Scan**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Overall Status**: ${{ inputs.workflow-status }}" >> $GITHUB_STEP_SUMMARY

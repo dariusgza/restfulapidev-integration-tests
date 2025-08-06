@@ -1,0 +1,75 @@
+name: Security Scan (ZAP)
+
+on:
+  workflow_call:
+    inputs:
+      target-url:
+        description: 'Target URL for security scanning'
+        required: false
+        default: 'https://api.restful-api.dev/'
+        type: string
+      zap-version:
+        description: 'ZAP Action version'
+        required: false
+        default: 'v0.14.0'
+        type: string
+      fail-on-issues:
+        description: 'Whether to fail the action on security issues'
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      scan-completed:
+        description: 'Whether the security scan completed'
+        value: ${{ jobs.security-scan.outputs.scan-completed }}
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  security-scan:
+    name: Security Scan (ZAP)
+    runs-on: ubuntu-latest
+    outputs:
+      scan-completed: ${{ steps.zap-scan.outputs.scan-completed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run ZAP Baseline Scan
+        id: zap-scan
+        uses: zaproxy/action-baseline@${{ inputs.zap-version }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: ${{ inputs.target-url }}
+          allow_issue_writing: false
+          fail_action: ${{ inputs.fail-on-issues }}
+        continue-on-error: true
+
+      - name: Set scan completion output
+        if: always()
+        run: echo "scan-completed=true" >> $GITHUB_OUTPUT
+
+      - name: Upload ZAP Scan results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-security-results
+          path: |
+            report_md.md
+            report_html.html
+            report_json.json
+          retention-days: 30
+
+      - name: Add ZAP Scan report to summary
+        if: always()
+        run: |
+          if [ -f report_md.md ]; then
+            echo "## 🔒 Security Scan Results (ZAP Baseline)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat report_md.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## 🔒 Security Scan Results (ZAP Baseline)" >> $GITHUB_STEP_SUMMARY
+            echo "❌ No ZAP scan results found." >> $GITHUB_STEP_SUMMARY
+          fi

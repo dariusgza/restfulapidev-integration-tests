@@ -35,31 +35,15 @@ This project provides a complete integration testing solution for REST APIs, fea
 
 ## 🏛️ Architecture
 
-### 📁 Project Structure
+For comprehensive architecture details, design patterns, and system diagrams, see:
 
-```
-IntegrationTests/
-├── Framework/
-│   ├── HttpClientFactory.cs      # HTTP client configuration
-│   ├── ObjectsClient.cs           # Generic HTTP client wrapper
-│   ├── Models/                    # Data transfer objects
-│   └── Services/
-│       └── ObjectsService.cs      # Business logic layer
-├── TestBuilders/                  # Builder pattern implementations
-│   ├── ObjectsRequestBuilder.cs
-│   └── ObjectsAttributesBuilder.cs
-└── Tests/
-    ├── TestBase.cs               # Base class with setup/cleanup
-    └── ObjectsCrudTests.cs       # Integration test suite
-```
+📖 **[Architecture Design Document](docs/ArchitectureDesign.md)**
 
-### 🔧 Core Components
+### 🔧 Key Components
 
-- **HttpClientFactory**: Creates configured HttpClient instances with base URL
-- **ObjectsClient**: Generic HTTP client with JSON serialization/deserialization
-- **ObjectsService**: Service layer providing business logic validation
-- **TestBase**: Common test infrastructure with automatic cleanup
-- **Test Builders**: Fluent APIs for creating test data
+- **Layered Architecture**: Service layer, HTTP client layer, and data models
+- **Design Patterns**: Builder, Service Layer, and Template Method patterns
+- **Test Infrastructure**: Automated setup, cleanup, and resource management
 
 ---
 
@@ -121,126 +105,74 @@ newman run ./src/ManualTests/PostmanCollection/api.restfull.dev.demo.postman_col
 
 ## 🔍 Test Categories
 
-Tests are organized using NUnit categories:
+For detailed test scenarios and comprehensive coverage analysis, see:
 
-| Category | Description | Tests |
-|----------|-------------|--------|
-| `Integration` | All integration tests | All |
-| `Read` | GET operations | Object retrieval, validation |
-| `Create` | POST operations | Object creation, validation |
-| `Update` | PUT/PATCH operations | Object modification |
-| `Delete` | DELETE operations | Object removal |
-| `Validation` | Input validation | Parameter validation tests |
-| `Error` | Error handling | HTTP error responses |
+📖 **[Test Scenarios Document](docs/TestScenarios.md)**
+
+### 🏷️ Quick Reference
+
+- `Integration` - All integration tests | `Read` - GET operations  
+- `Create` - POST operations | `Update` - PUT/PATCH operations
+- `Delete` - DELETE operations | `Validation` - Input validation | `Error` - Error handling
 
 ---
 
 ## 🚀 CI/CD Pipeline
 
-The GitHub Actions workflow provides comprehensive automated testing:
+For detailed testing strategy, execution phases, and quality gates, see:
 
-### 🏗️ Pipeline Jobs
+📖 **[Test Plan Document](docs/TestPlan.md)**
+📖 **[Architecture Design Document - CI/CD Section](docs/ArchitectureDesign.md#-deployment-architecture)**
 
-1. **📊 .NET Integration Tests**
-   - Dependency caching for faster builds
-   - Comprehensive test execution
-   - Test result publishing and artifacts
+### ⚡ Pipeline Overview
 
-2. **🌐 Postman API Tests**
-   - Newman collection execution
-   - Rate limiting protection
-   - Detailed reporting
-
-3. **🔒 Security Scanning**
-   - OWASP ZAP baseline security scan
-   - Vulnerability reporting
-   - Security artifact generation
-
-4. **📈 Test Summary**
-   - Aggregated results from all jobs
-   - Clear pass/fail indicators
-   - Comprehensive workflow reporting
-
-### 🎯 Pipeline Features
-
-- **⚡ Parallel Execution**: Jobs run concurrently where possible
-- **📦 Intelligent Caching**: NuGet packages cached for faster builds
-- **🛡️ Error Handling**: Graceful handling of API rate limits
-- **📊 Rich Reporting**: Detailed summaries and artifacts
-- **🔄 Flexible Triggers**: Push, PR, manual, and scheduled execution
+- **Multi-Stage Testing**: .NET tests, Postman collection, security scanning
+- **Parallel Execution**: Optimized for speed with concurrent job execution  
+- **Comprehensive Reporting**: Automated summaries and artifact collection
+- **Quality Gates**: 95%+ pass rate requirement with detailed failure analysis
 
 ---
 
 ## 🛠️ Development Workflow
 
-### 🧪 Writing Tests
+For detailed development guidelines, code patterns, and maintenance procedures, see:
 
-1. **Extend TestBase** for automatic setup/cleanup:
-   ```csharp
-   [TestFixture]
-   [Category("Integration")]
-   public class MyApiTests : TestBase
-   {
-       // Tests automatically inherit Client and cleanup
-   }
-   ```
+📖 **[Test Plan Document - Development Workflow](docs/TestPlan.md#-maintenance--evolution)**
+📖 **[Architecture Design Document - Design Patterns](docs/ArchitectureDesign.md#-design-patterns--principles)**
 
-2. **Use Test Builders** for data creation:
-   ```csharp
-   var request = ObjectsRequestBuilder.Create()
-       .WithName("test-object")
-       .WithData(builder => builder.WithDescription("Test description"))
-       .Build();
-   ```
+### 🧪 Quick Start
 
-3. **Follow Naming Conventions**:
-   ```csharp
-   [Test]
-   public async Task GivenValidRequest_WhenCallingApi_ThenReturnsExpectedResult()
-   ```
-
-### 📋 Code Quality
-
-- **FluentAssertions**: Use expressive assertions for better readability
-- **Async/Await**: All HTTP operations are properly async
-- **ConfigureAwait(false)**: Used consistently for library code
-- **Resource Cleanup**: Automatic cleanup prevents test pollution
+1. **Extend TestBase** for automatic setup/cleanup
+2. **Use Test Builders** for flexible test data creation
+3. **Follow Given-When-Then** naming conventions for test methods
+4. **Leverage FluentAssertions** for expressive test assertions
 
 ---
 
 ## 📊 Test Results & Reporting
 
-### 🎯 Local Testing
+For comprehensive reporting strategy, metrics, and KPIs, see:
 
-Test results are generated in TRX format:
-- Location: `IntegrationTests/TestResults/`
-- Format: Visual Studio Test Results (`.trx`)
-- Viewable in Visual Studio or with TRX viewers
+📖 **[Test Plan Document - Reporting & Metrics](docs/TestPlan.md#-reporting--metrics)**
 
-### 🌐 CI/CD Reporting
+### 📋 Quick Overview
 
-- **GitHub Actions Summary**: Detailed results in workflow summaries
-- **Test Artifacts**: Downloadable test result files
-- **Security Reports**: ZAP scan results in multiple formats
-- **PR Comments**: Automated test result comments on pull requests
+- **Local**: TRX format results in `IntegrationTests/TestResults/`
+- **CI/CD**: GitHub Actions summaries, downloadable artifacts, and PR integration
+- **Security**: OWASP ZAP reports in multiple formats
 
 ---
 
 ## ⚠️ Known Limitations
 
-### 🚦 API Rate Limiting
+For comprehensive risk management and mitigation strategies, see:
 
-The RESTFUL-API.dev service has limitations:
-- **100 requests per day** per IP
-- Tests may fail when rate limit is exceeded
-- Rate limit resets daily
-- Use `--delay-request` with Newman to reduce rate limiting
+📖 **[Test Plan Document - Risk Management](docs/TestPlan.md#-risk-management)**
 
-### 🛠️ Workarounds
+### 🚦 Key Limitations
 
-- Tests include rate limiting detection
-- CI/CD pipeline includes delays between requests
-- Graceful error handling for rate limit scenarios
+- **API Rate Limiting**: 100 requests/day limit with automatic detection and graceful handling
+- **Network Dependencies**: External API dependency with retry mechanisms in place
 
 ---
 
@@ -269,7 +201,15 @@ dotnet build --configuration Release
 
 ---
 
-## 📚 Additional Resources
+## 📚 Documentation & Resources
+
+### 📖 Project Documentation
+
+- **[Architecture Design Document](docs/ArchitectureDesign.md)** - System architecture, design patterns, and component interactions
+- **[Test Plan Document](docs/TestPlan.md)** - Comprehensive testing strategy, execution phases, and quality gates
+- **[Test Scenarios Document](docs/TestScenarios.md)** - Detailed test cases and coverage analysis
+
+### 🔗 External Resources
 
 - **[RESTFUL-API.dev Documentation](https://restful-api.dev/)**
 - **[NUnit Documentation](https://docs.nunit.org/)**

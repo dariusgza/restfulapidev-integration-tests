@@ -1,0 +1,98 @@
+name: Postman API Tests
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version'
+        required: false
+        default: '20.x'
+        type: string
+      collection-path:
+        description: 'Path to Postman collection file'
+        required: false
+        default: './src/ManualTests/PostmanCollection/api.restfull.dev.demo.postman_collection.json'
+        type: string
+    outputs:
+      test-results:
+        description: 'Newman test execution results'
+        value: ${{ jobs.postman-tests.outputs.test-results }}
+      results-found:
+        description: 'Whether test results were found'
+        value: ${{ jobs.postman-tests.outputs.results-found }}
+
+permissions:
+  contents: read
+
+jobs:
+  postman-tests:
+    name: Postman API Tests
+    runs-on: ubuntu-latest
+    outputs:
+      test-results: ${{ steps.newman-results.outputs.results-found }}
+      results-found: ${{ steps.newman-results.outputs.results-found }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run Postman collection with Newman
+        id: newman-run
+        run: |
+          # Add delay to avoid rate limiting
+          sleep 5
+          newman run ${{ inputs.collection-path }} \
+            --reporters cli,junit \
+            --reporter-junit-export=postman-results.xml \
+            --timeout-request 30000 \
+            --delay-request 1000 \
+            --bail
+        continue-on-error: true
+
+      - name: Parse Newman results
+        if: always()
+        id: newman-results
+        run: |
+          if [ -f postman-results.xml ]; then
+            total=$(grep -o '<testcase' postman-results.xml | wc -l)
+            failed=$(grep -o '<failure' postman-results.xml | wc -l)
+            passed=$((total - failed))
+            
+            echo "total=$total" >> $GITHUB_OUTPUT
+            echo "passed=$passed" >> $GITHUB_OUTPUT
+            echo "failed=$failed" >> $GITHUB_OUTPUT
+            echo "results-found=true" >> $GITHUB_OUTPUT
+            
+            echo "## Newman API Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "| Total | Passed | Failed |" >> $GITHUB_STEP_SUMMARY
+            echo "|-------|--------|--------|" >> $GITHUB_STEP_SUMMARY
+            echo "| $total | $passed | $failed |" >> $GITHUB_STEP_SUMMARY
+            
+            # Fail the step if there were failures
+            if [ $failed -gt 0 ]; then
+              echo "::error::$failed Newman tests failed"
+              exit 1
+            fi
+          else
+            echo "results-found=false" >> $GITHUB_OUTPUT
+            echo "## Newman API Test Results" >> $GITHUB_STEP_SUMMARY
+            echo "❌ No postman-results.xml file found." >> $GITHUB_STEP_SUMMARY
+            echo "::error::Newman results file not found"
+            exit 1
+          fi
+
+      - name: Upload Postman test results
+        if: always() && steps.newman-results.outputs.results-found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: postman-test-results
+          path: postman-results.xml
+          retention-days: 30
